@@ -1,6 +1,6 @@
 import unittest
 
-from htmlnode import HTMLNode, LeafNode
+from htmlnode import HTMLNode, LeafNode, ParentNode
 
 
 class TestHTMLNode(unittest.TestCase):
@@ -64,6 +64,47 @@ class TestLeafNode(unittest.TestCase):
     def test_init_with_children(self) -> None:
         with self.assertRaises(TypeError):
             LeafNode("p", "some value", children=[])
+
+
+class TestParentNode(unittest.TestCase):
+
+    def setUp(self) -> None:
+        self.props = {
+            "prop1": "value1",
+            "prop2": "value2",
+        }
+        self.leaf_node = LeafNode("p", "Hello, world!", props=self.props)
+        self.parent_node = ParentNode("div", children=None, props=self.props)
+
+    def tearDown(self) -> None:
+        self.parent_node.children = None
+
+    def test_to_html_blank(self) -> None:
+        expected = "<div></div>"
+        self.parent_node.children = []
+        self.assertEqual(self.parent_node.to_html(), expected)
+
+    def test_to_html_leaf_single(self) -> None:
+        self.parent_node.children = [self.leaf_node]
+        expected = "<div><p>Hello, world!</p></div>"
+        self.assertEqual(self.parent_node.to_html(), expected)
+
+    def test_to_html_leaf_many(self) -> None:
+        self.parent_node.children = [self.leaf_node, self.leaf_node]
+        expected = "<div><p>Hello, world!</p><p>Hello, world!</p></div>"
+        self.assertEqual(self.parent_node.to_html(), expected)
+
+    def test_to_html_nested(self) -> None:
+        child = ParentNode("div", children=[self.leaf_node])
+        self.parent_node.children = [child]
+        expected = "<div><div><p>Hello, world!</p></div></div>"
+        self.assertEqual(self.parent_node.to_html(), expected)
+
+    def test_to_html_leaf_and_nested(self) -> None:
+        child = ParentNode("div", children=[self.leaf_node])
+        self.parent_node.children = [self.leaf_node, child]
+        expected = "<div><p>Hello, world!</p><div><p>Hello, world!</p></div></div>"
+        self.assertEqual(self.parent_node.to_html(), expected)
 
 
 if __name__ == "__main__":

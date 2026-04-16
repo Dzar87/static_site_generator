@@ -1,6 +1,3 @@
-from typing import Self
-
-
 class HTMLNode:
     repr_attrs = ("tag", "value", "children", "props")
 
@@ -8,7 +5,7 @@ class HTMLNode:
         self,
         tag: str | None = None,
         value: str | None = None,
-        children: list[Self] | None = None,
+        children: list["HTMLNode"] | None = None,
         props: dict[str, str] | None = None,
     ) -> None:
         self.tag = tag
@@ -55,3 +52,26 @@ class LeafNode(HTMLNode):
         if not self.tag:
             return self.value
         return f"<{self.tag}>{self.value}</{self.tag}>"
+
+
+class ParentNode(HTMLNode):
+    repr_attrs = ("tag", "children", "props")
+
+    def __init__(
+        self,
+        tag: str | None,
+        children: list[HTMLNode] | None,
+        props: dict[str, str] | None = None,
+    ) -> None:
+        super().__init__(tag=tag, children=children, props=props)
+
+    def to_html(self) -> str:
+        if not self.tag:
+            raise ValueError("tag not initialised")
+        if self.children is None:
+            raise ValueError("children not initialised")
+        result = [f"<{self.tag}>"]
+        for child in self.children:
+            result.append(child.to_html())
+        result.append(f"</{self.tag}>")
+        return "".join(result)
