@@ -6,7 +6,7 @@ class HTMLNode:
         tag: str | None = None,
         value: str | None = None,
         children: list["HTMLNode"] | None = None,
-        props: dict[str, str] | None = None,
+        props: dict[str, str | None] | None = None,
     ) -> None:
         self.tag = tag
         self.value = value
@@ -32,7 +32,7 @@ class HTMLNode:
                 result.append(f"{attr}: '{v}'")
             else:
                 result.append(f"{attr}: {v}")
-        return f"{self.__class__.__name__}({", ".join(result)})"
+        return f"{self.__class__.__name__}({', '.join(result)})"
 
 
 class LeafNode(HTMLNode):
@@ -42,7 +42,7 @@ class LeafNode(HTMLNode):
         self,
         tag: str | None,
         value: str | None,
-        props: dict[str, str] | None = None,
+        props: dict[str, str | None] | None = None,
     ) -> None:
         super().__init__(tag=tag, value=value, props=props)
 
@@ -61,7 +61,7 @@ class ParentNode(HTMLNode):
         self,
         tag: str | None,
         children: list[HTMLNode] | None,
-        props: dict[str, str] | None = None,
+        props: dict[str, str | None] | None = None,
     ) -> None:
         super().__init__(tag=tag, children=children, props=props)
 
