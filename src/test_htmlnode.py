@@ -6,7 +6,7 @@ from htmlnode import HTMLNode, LeafNode, ParentNode
 class TestHTMLNode(unittest.TestCase):
     def setUp(self) -> None:
         self.child = HTMLNode(tag="a", value="some link")
-        self.props = {
+        self.props: dict[str, str | None] = {
             "prop1": "value1",
             "prop2": "value2",
         }
@@ -31,7 +31,7 @@ class TestHTMLNode(unittest.TestCase):
 
 class TestLeafNode(unittest.TestCase):
     def setUp(self) -> None:
-        self.props = {
+        self.props: dict[str, str | None] = {
             "prop1": "value1",
             "prop2": "value2",
         }
@@ -63,13 +63,13 @@ class TestLeafNode(unittest.TestCase):
 
     def test_init_with_children(self) -> None:
         with self.assertRaises(TypeError):
-            LeafNode("p", "some value", children=[])
+            LeafNode("p", "some value", children=[])  # noqa
 
 
 class TestParentNode(unittest.TestCase):
 
     def setUp(self) -> None:
-        self.props = {
+        self.props: dict[str, str | None] = {
             "prop1": "value1",
             "prop2": "value2",
         }

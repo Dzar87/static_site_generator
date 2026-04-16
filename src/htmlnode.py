@@ -1,3 +1,10 @@
+from typing import Protocol, Sequence
+from abc import abstractmethod
+
+class NodeProtocol(Protocol):
+    def to_html(self) -> str: ...
+
+
 class HTMLNode:
     repr_attrs = ("tag", "value", "children", "props")
 
@@ -5,7 +12,7 @@ class HTMLNode:
         self,
         tag: str | None = None,
         value: str | None = None,
-        children: list["HTMLNode"] | None = None,
+        children: Sequence[NodeProtocol]| None = None,
         props: dict[str, str | None] | None = None,
     ) -> None:
         self.tag = tag
@@ -13,6 +20,7 @@ class HTMLNode:
         self.children = children
         self.props = props
 
+    @abstractmethod
     def to_html(self) -> str:
         raise NotImplementedError
 
@@ -60,7 +68,7 @@ class ParentNode(HTMLNode):
     def __init__(
         self,
         tag: str | None,
-        children: list[HTMLNode] | None,
+        children: Sequence[NodeProtocol] | None,
         props: dict[str, str | None] | None = None,
     ) -> None:
         super().__init__(tag=tag, children=children, props=props)
