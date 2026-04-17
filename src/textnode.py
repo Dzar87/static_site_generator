@@ -142,3 +142,13 @@ def split_nodes_image(old_nodes: Sequence[TextNode]) -> Sequence[TextNode]:
         if (last_text := split_node[-1]) != "":
             extracted.append(TextNode(last_text, TextType.TEXT))
     return extracted
+
+
+def text_to_textnodes(text: str) -> Sequence[TextNode]:
+    result = [TextNode(text, TextType.TEXT)]
+    result = split_nodes_image(result)
+    result = split_nodes_link(result)
+    result = split_nodes_delimiter(result, "**", TextType.BOLD)
+    result = split_nodes_delimiter(result, "_", TextType.ITALIC)
+    result = split_nodes_delimiter(result, "`", TextType.CODE)
+    return result
