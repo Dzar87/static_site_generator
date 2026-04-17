@@ -1,8 +1,10 @@
 import unittest
 
 from textnode import (
+    BlockType,
     TextNode,
     TextType,
+    block_to_block_type,
     extract_markdown_images,
     extract_markdown_links,
     markdown_to_blocks,
@@ -481,6 +483,149 @@ This is the same paragraph on a new line
         ]
         blocks = markdown_to_blocks(md)
         self.assertSequenceEqual(blocks, expected)
+
+
+class TestBlockToBlockType(unittest.TestCase):
+
+    def test_empty(self) -> None:
+        self.assertEqual(block_to_block_type(""), BlockType.PARAGRAPH)
+
+    def test_heading_block_happy(self) -> None:
+        blocks = [
+            "# heading1",
+            "## heading2",
+            "### heading3",
+            "#### heading3",
+            "##### heading5",
+            "###### heading6",
+        ]
+        expected = [BlockType.HEADING] * len(blocks)
+        result = [block_to_block_type(b) for b in blocks]
+        self.assertListEqual(result, expected)
+
+    def test_heading_block_sad(self) -> None:
+        blocks = [
+            "heading0",
+            "#heading1",
+            "##heading2",
+            "###heading3",
+            "####heading4",
+            "#####heading5",
+            "######heading6",
+            "####### heading7",
+        ]
+        expected = [BlockType.PARAGRAPH] * len(blocks)
+        result = [block_to_block_type(b) for b in blocks]
+        self.assertListEqual(result, expected)
+
+    def test_code_block_happy(self) -> None:
+        blocks = [
+            """```
+            some code
+            ```""",
+        ]
+        expected = [BlockType.CODE] * len(blocks)
+        result = [block_to_block_type(b) for b in blocks]
+        self.assertListEqual(result, expected)
+
+    def test_code_block_sad(self) -> None:
+        blocks = [
+            """```python
+            some code
+            ```""",
+            """``
+            some code
+            ```""",
+            """```
+            some code
+            ``""",
+        ]
+        expected = [BlockType.PARAGRAPH] * len(blocks)
+        result = [block_to_block_type(b) for b in blocks]
+        self.assertListEqual(result, expected)
+
+    def test_quote_block_happy(self) -> None:
+        blocks = [
+            ">quote",
+            "> quote",
+            ">  quote",
+            """>quote line1
+>line2""",
+            """> quote line1
+> line2""",
+            """> quote line1
+>line2""",
+            """>quote line1
+> line2""",
+        ]
+        expected = [BlockType.QUOTE] * len(blocks)
+        result = [block_to_block_type(b) for b in blocks]
+        self.assertListEqual(result, expected)
+
+    def test_quote_block_sad(self) -> None:
+        blocks = [
+            "quote",
+            """>quote line1
+line2""",
+            """> quote line2
+line2""",
+            """quote line1
+>line2""",
+            """quote line1
+> line2""",
+        ]
+        expected = [BlockType.PARAGRAPH] * len(blocks)
+        result = [block_to_block_type(b) for b in blocks]
+        self.assertListEqual(result, expected)
+
+    def test_unordered_list_happy(self) -> None:
+        blocks = [
+            "- line1",
+            """- line1
+- line2""",
+        ]
+        expected = [BlockType.UNORDERED_LIST] * len(blocks)
+        result = [block_to_block_type(b) for b in blocks]
+        self.assertListEqual(result, expected)
+
+    def test_unordered_list_sad(self) -> None:
+        blocks = [
+            "-line1",
+            """- line1
+line2""",
+            """- line1
+-line2""",
+            """line1
+- line2""",
+            """-line1
+- line2""",
+        ]
+        expected = [BlockType.PARAGRAPH] * len(blocks)
+        result = [block_to_block_type(b) for b in blocks]
+        self.assertListEqual(result, expected)
+
+    def test_ordered_list_happy(self) -> None:
+        blocks = [
+            "1. line1",
+            """1. line1
+2. line2""",
+        ]
+        expected = [BlockType.ORDERED_LIST] * len(blocks)
+        result = [block_to_block_type(b) for b in blocks]
+        self.assertListEqual(result, expected)
+
+    def test_ordered_list_sad(self) -> None:
+        blocks = [
+            "0. line1",
+            """2. line1
+1. line2""",
+            """1. line1
+3. line2
+2. line3""",
+        ]
+        expected = [BlockType.PARAGRAPH] * len(blocks)
+        result = [block_to_block_type(b) for b in blocks]
+        self.assertListEqual(result, expected)
 
 
 if __name__ == "__main__":

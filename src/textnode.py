@@ -4,6 +4,7 @@ from typing import Sequence
 
 from htmlnode import HTMLNode, LeafNode
 
+
 class TextType(Enum):
     TEXT = "text"
     BOLD = "bold"
@@ -12,11 +13,23 @@ class TextType(Enum):
     LINK = "link"
     IMAGE = "image"
 
+
+class BlockType(Enum):
+    PARAGRAPH = "paragraph"
+    HEADING = "heading"
+    CODE = "code"
+    QUOTE = "quote"
+    UNORDERED_LIST = "unordered_list"
+    ORDERED_LIST = "ordered_list"
+
+
 IMAGE_RE = re.compile(r"!\[(?P<alt>[^\[\]]*)\]\((?P<src>[^\(\)]*)\)")
 IMAGE_SPLIT_RE = re.compile(r"!\[[^\[\]]*\]\([^\(\)]*\)")
 LINK_RE = re.compile(r"(?<!!)\[(?P<value>[^\[\]]*)\]\((?P<href>[^\[\]]*)\)")
 LINK_SPLIT_RE = re.compile(r"(?<!!)\[[^\[\]]*\]\([^\[\]]*\)")
-
+HEADING_PREFIX_RE = re.compile(r"^#{1,6}\s.*$")
+QUOTE_PREFIX_RE = re.compile(r"^>\s?.*$")
+NUMBER_PREFIX_RE = re.compile(r"^(?P<n>\d+)\.\s.*$")
 
 class TextNode:
     def __init__(self, text: str, text_type: TextType, url: str | None = None) -> None:
@@ -156,3 +169,22 @@ def text_to_textnodes(text: str) -> Sequence[TextNode]:
 
 def markdown_to_blocks(markdown: str) -> Sequence[str]:
     return [s for i in markdown.split("\n\n") if (s := i.strip())]
+
+
+def block_to_block_type(block: str) -> BlockType:
+    if HEADING_PREFIX_RE.match(block):
+        return BlockType.HEADING
+    if block.startswith("```\n") and block.endswith("```"):
+        return BlockType.CODE
+    if all([QUOTE_PREFIX_RE.match(line) for line in block.split("\n")]):
+        return BlockType.QUOTE
+    if all([line.startswith("- ") for line in block.split("\n")]):
+        return BlockType.UNORDERED_LIST
+    if block.startswith("1. "):
+        for idx, line in enumerate(block.split("\n"), start=1):
+            if (match := re.match(NUMBER_PREFIX_RE, line)) and int(match["n"]) == idx:
+                continue
+            break
+        else:
+            return BlockType.ORDERED_LIST
+    return BlockType.PARAGRAPH
