@@ -1,6 +1,13 @@
 import unittest
 
-from textnode import TextNode, TextType, text_node_to_html_node, split_nodes_delimiter
+from textnode import (
+    TextNode,
+    TextType,
+    extract_markdown_images,
+    extract_markdown_links,
+    split_nodes_delimiter,
+    text_node_to_html_node,
+)
 
 
 class TestTextNode(unittest.TestCase):
@@ -184,6 +191,94 @@ class TestSplitNodeDelimiter(unittest.TestCase):
 
         self.assertEqual(result, expected)
         self.assertIsNot(result, nodes)
+
+
+class TestExtractMardownImages(unittest.TestCase):
+
+    def test_none(self) -> None:
+        text = "Nothing to see here."
+        expected = []
+        result = extract_markdown_images(text)
+        self.assertEqual(result, expected)
+
+    def test_single(self) -> None:
+        text = "This is text with a ![rick roll](https://i.imgur.com/aKaOqIh.gif)."
+        expected = [("rick roll", "https://i.imgur.com/aKaOqIh.gif")]
+        result = extract_markdown_images(text)
+        self.assertEqual(result, expected)
+
+    def test_many(self) -> None:
+        text = (
+            "This is text with a ![rick roll](https://i.imgur.com/aKaOqIh.gif) and "
+            "![obi wan](https://i.imgur.com/fJRm4Vk.jpeg)"
+        )
+        expected = [
+            ("rick roll", "https://i.imgur.com/aKaOqIh.gif"),
+            ("obi wan", "https://i.imgur.com/fJRm4Vk.jpeg"),
+        ]
+        result = extract_markdown_images(text)
+        self.assertEqual(result , expected)
+
+    def test_start(self) -> None:
+        text = "![rick roll](https://i.imgur.com/aKaOqIh.gif) image at the start."
+        expected = [("rick roll", "https://i.imgur.com/aKaOqIh.gif")]
+        result = extract_markdown_images(text)
+        self.assertEqual(result , expected)
+
+    def test_end(self) -> None:
+        text = "Image at the end ![rick roll](https://i.imgur.com/aKaOqIh.gif)"
+        expected = [("rick roll", "https://i.imgur.com/aKaOqIh.gif")]
+        result = extract_markdown_images(text)
+        self.assertEqual(result, expected)
+
+    def test_exclude_links(self) -> None:
+        text = "This is text with a link [to boot dev](https://www.boot.dev)."
+        expected = []
+        result = extract_markdown_images(text)
+        self.assertEqual(result, expected)
+
+class TestExtractMardownLinks(unittest.TestCase):
+    def test_none(self) -> None:
+        text = "Nothing to see here."
+        expected = []
+        result = extract_markdown_links(text)
+        self.assertEqual(result, expected)
+
+    def test_single(self) -> None:
+        text = "This is text with a link [to boot dev](https://www.boot.dev)."
+        result = extract_markdown_links(text)
+        expected = [("to boot dev", "https://www.boot.dev")]
+        self.assertEqual(result, expected)
+
+    def test_many(self) -> None:
+        text = (
+            "This is text with a link [to boot dev](https://www.boot.dev) and "
+            "[to youtube](https://www.youtube.com/@bootdotdev)"
+        )
+        result = extract_markdown_links(text)
+        expected = [
+            ("to boot dev", "https://www.boot.dev"),
+            ("to youtube", "https://www.youtube.com/@bootdotdev"),
+        ]
+        self.assertEqual(result, expected)
+
+    def test_start(self) -> None:
+        text = "[to boot dev](https://www.boot.dev) link at the start."
+        result = extract_markdown_links(text)
+        expected = [("to boot dev", "https://www.boot.dev")]
+        self.assertEqual(result, expected)
+
+    def test_end(self) -> None:
+        text = "link at the end [to boot dev](https://www.boot.dev)"
+        result = extract_markdown_links(text)
+        expected = [("to boot dev", "https://www.boot.dev")]
+        self.assertEqual(result, expected)
+
+    def test_exclude_image(self) -> None:
+        text = "Image at the end ![rick roll](https://i.imgur.com/aKaOqIh.gif)"
+        expected = []
+        result = extract_markdown_links(text)
+        self.assertEqual(result, expected)
 
 
 if __name__ == "__main__":

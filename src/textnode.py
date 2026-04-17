@@ -1,4 +1,5 @@
 from enum import Enum
+import re
 from typing import Sequence
 
 from htmlnode import HTMLNode, LeafNode
@@ -10,6 +11,10 @@ class TextType(Enum):
     CODE = "code"
     LINK = "link"
     IMAGE = "image"
+
+IMAGE_RE = re.compile(r"!\[(?P<alt>[^\[\]]*)\]\((?P<src>[^\(\)]*)\)")
+LINK_RE = re.compile(r"(?<!!)\[(?P<value>[^\[\]]*)\]\((?P<href>[^\[\]]*)\)")
+
 
 class TextNode:
     def __init__(self, text: str, text_type: TextType, url: str | None = None) -> None:
@@ -69,3 +74,17 @@ def split_nodes_delimiter(
                 continue
             new_nodes.append(TextNode(split_node, TextType.TEXT))
     return new_nodes
+
+
+def extract_markdown_images(text: str) -> list[tuple[str, str]]:
+    extracted: list[tuple[str, str]] = []
+    for match in IMAGE_RE.finditer(text):
+        extracted.append((match["alt"], match["src"]))
+    return extracted
+
+
+def extract_markdown_links(text: str) -> list[tuple[str, str]]:
+    extracted: list[tuple[str, str]] = []
+    for match in LINK_RE.finditer(text):
+        extracted.append((match["value"], match["href"]))
+    return extracted
