@@ -1,6 +1,6 @@
 import unittest
 
-from textnode import TextNode, TextType, text_node_to_html_node
+from textnode import TextNode, TextType, text_node_to_html_node, split_nodes_delimiter
 
 
 class TestTextNode(unittest.TestCase):
@@ -71,6 +71,120 @@ class TestNodeToHTML(unittest.TestCase):
                 "alt": "This is a image node"
             }
         )
+
+
+class TestSplitNodeDelimiter(unittest.TestCase):
+
+    def test_delimit_uneven(self) -> None:
+        nodes = [TextNode("some text with _uneven delimiter", TextType.TEXT)]
+        with self.assertRaises(ValueError):
+            split_nodes_delimiter(nodes, "_", TextType.ITALIC)
+
+    def test_delimit_none(self) -> None:
+        nodes = [
+            TextNode("some text with no delimiter", TextType.TEXT),
+        ]
+        result = split_nodes_delimiter(nodes, "_", TextType.ITALIC)
+        self.assertEqual(result, nodes)
+        self.assertIsNot(result, nodes)
+
+    def test_delimit_text(self) -> None:
+        nodes = [
+            TextNode("some text with no delimiter", TextType.TEXT),
+        ]
+        result = split_nodes_delimiter(nodes, "_", TextType.TEXT)
+        self.assertEqual(result, nodes)
+        self.assertIsNot(result, nodes)
+
+    def test_delimit_bold(self) -> None:
+        nodes = [
+            TextNode("some text with **bold** delimiter", TextType.TEXT),
+        ]
+        expected = [
+            TextNode("some text with ", TextType.TEXT),
+            TextNode("bold", TextType.BOLD),
+            TextNode(" delimiter", TextType.TEXT),
+        ]
+        result = split_nodes_delimiter(nodes, "**", TextType.BOLD)
+        self.assertEqual(result, expected)
+        self.assertIsNot(result, nodes)
+
+    def test_delimit_italic(self) -> None:
+        nodes = [
+            TextNode("some text with _italic_ delimiter", TextType.TEXT),
+        ]
+        expected = [
+            TextNode("some text with ", TextType.TEXT),
+            TextNode("italic", TextType.ITALIC),
+            TextNode(" delimiter", TextType.TEXT),
+        ]
+        result = split_nodes_delimiter(nodes, "_", TextType.ITALIC)
+        self.assertEqual(result, expected)
+        self.assertIsNot(result, nodes)
+
+    def test_delimit_code(self) -> None:
+        nodes = [
+            TextNode("some text with `code` delimiter", TextType.TEXT),
+        ]
+        expected = [
+            TextNode("some text with ", TextType.TEXT),
+            TextNode("code", TextType.CODE),
+            TextNode(" delimiter", TextType.TEXT),
+        ]
+        result = split_nodes_delimiter(nodes, "`", TextType.CODE)
+        self.assertEqual(result, expected)
+        self.assertIsNot(result, nodes)
+
+    def test_delimit_start(self) -> None:
+        nodes = [
+            TextNode("**bold** delimiter at the start", TextType.TEXT),
+        ]
+        expected = [
+            TextNode("bold", TextType.BOLD),
+            TextNode(" delimiter at the start", TextType.TEXT),
+        ]
+        result = split_nodes_delimiter(nodes, "**", TextType.BOLD)
+        self.assertEqual(result, expected)
+        self.assertIsNot(result, nodes)
+
+    def test_delimit_end(self) -> None:
+        nodes = [
+            TextNode("delimiter at the end **bold**", TextType.TEXT),
+        ]
+        expected = [
+            TextNode("delimiter at the end ", TextType.TEXT),
+            TextNode("bold", TextType.BOLD),
+        ]
+        result = split_nodes_delimiter(nodes, "**", TextType.BOLD)
+        self.assertEqual(result, expected)
+        self.assertIsNot(result, nodes)
+
+    def test_delimit_all(self) -> None:
+        nodes = [
+            TextNode("some text with no delimiter", TextType.TEXT),
+            TextNode("some text with **bold** delimiter", TextType.TEXT),
+            TextNode("some text with _italic_ delimiter", TextType.TEXT),
+            TextNode("some text with `code` delimiter", TextType.TEXT),
+        ]
+        expected = [
+            TextNode("some text with no delimiter", TextType.TEXT),
+            TextNode("some text with ", TextType.TEXT),
+            TextNode("bold", TextType.BOLD),
+            TextNode(" delimiter", TextType.TEXT),
+            TextNode("some text with ", TextType.TEXT),
+            TextNode("italic", TextType.ITALIC),
+            TextNode(" delimiter", TextType.TEXT),
+            TextNode("some text with ", TextType.TEXT),
+            TextNode("code", TextType.CODE),
+            TextNode(" delimiter", TextType.TEXT),
+        ]
+        result = split_nodes_delimiter(nodes, "**", TextType.BOLD)
+        result = split_nodes_delimiter(result, "_", TextType.ITALIC)
+        result = split_nodes_delimiter(result, "`", TextType.CODE)
+
+        self.assertEqual(result, expected)
+        self.assertIsNot(result, nodes)
+
 
 if __name__ == "__main__":
     unittest.main()

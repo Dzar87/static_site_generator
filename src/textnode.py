@@ -1,4 +1,5 @@
 from enum import Enum
+from typing import Sequence
 
 from htmlnode import HTMLNode, LeafNode
 
@@ -47,3 +48,24 @@ def text_node_to_html_node(text_node: TextNode) -> HTMLNode:
     else:
         raise ValueError("unknown TextType")
     return value
+
+
+def split_nodes_delimiter(
+    old_nodes: Sequence[TextNode], delimiter: str, text_type: TextType
+) -> Sequence[TextNode]:
+    new_nodes: Sequence[TextNode] = []
+    for node in old_nodes:
+        if node.text_type != TextType.TEXT or delimiter not in node.text:
+            new_nodes.append(node)
+            continue
+        split_nodes = node.text.split(delimiter)
+        if not len(split_nodes) % 2:
+            raise ValueError(f"uneven '{delimiter}'. node: {node}")
+        for idx, split_node in enumerate(split_nodes):
+            if not split_node:
+                continue
+            if idx % 2:
+                new_nodes.append(TextNode(split_node, text_type))
+                continue
+            new_nodes.append(TextNode(split_node, TextType.TEXT))
+    return new_nodes
