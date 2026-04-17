@@ -5,6 +5,7 @@ from textnode import (
     TextType,
     extract_markdown_images,
     extract_markdown_links,
+    markdown_to_blocks,
     split_nodes_delimiter,
     split_nodes_image,
     split_nodes_link,
@@ -459,6 +460,27 @@ class TestTextToTextNodes(unittest.TestCase):
         ]
         result = text_to_textnodes(text)
         self.assertSequenceEqual(result, expected)
+
+
+class TestMarkdownToBlocks(unittest.TestCase):
+
+    def test_md_to_blocks(self) -> None:
+        md = """
+This is **bolded** paragraph
+
+This is another paragraph with _italic_ text and `code` here
+This is the same paragraph on a new line
+
+- This is a list
+- with items
+"""
+        expected = [
+            "This is **bolded** paragraph",
+            "This is another paragraph with _italic_ text and `code` here\nThis is the same paragraph on a new line",
+            "- This is a list\n- with items",
+        ]
+        blocks = markdown_to_blocks(md)
+        self.assertSequenceEqual(blocks, expected)
 
 
 if __name__ == "__main__":

@@ -152,3 +152,7 @@ def text_to_textnodes(text: str) -> Sequence[TextNode]:
     result = split_nodes_delimiter(result, "_", TextType.ITALIC)
     result = split_nodes_delimiter(result, "`", TextType.CODE)
     return result
+
+
+def markdown_to_blocks(markdown: str) -> Sequence[str]:
+    return [s for i in markdown.split("\n\n") if (s := i.strip())]
