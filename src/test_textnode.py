@@ -6,6 +6,8 @@ from textnode import (
     extract_markdown_images,
     extract_markdown_links,
     split_nodes_delimiter,
+    split_nodes_image,
+    split_nodes_link,
     text_node_to_html_node,
 )
 
@@ -92,7 +94,7 @@ class TestSplitNodeDelimiter(unittest.TestCase):
             TextNode("some text with no delimiter", TextType.TEXT),
         ]
         result = split_nodes_delimiter(nodes, "_", TextType.ITALIC)
-        self.assertEqual(result, nodes)
+        self.assertSequenceEqual(result, nodes)
         self.assertIsNot(result, nodes)
 
     def test_delimit_text(self) -> None:
@@ -100,7 +102,7 @@ class TestSplitNodeDelimiter(unittest.TestCase):
             TextNode("some text with no delimiter", TextType.TEXT),
         ]
         result = split_nodes_delimiter(nodes, "_", TextType.TEXT)
-        self.assertEqual(result, nodes)
+        self.assertSequenceEqual(result, nodes)
         self.assertIsNot(result, nodes)
 
     def test_delimit_bold(self) -> None:
@@ -113,7 +115,7 @@ class TestSplitNodeDelimiter(unittest.TestCase):
             TextNode(" delimiter", TextType.TEXT),
         ]
         result = split_nodes_delimiter(nodes, "**", TextType.BOLD)
-        self.assertEqual(result, expected)
+        self.assertSequenceEqual(result, expected)
         self.assertIsNot(result, nodes)
 
     def test_delimit_italic(self) -> None:
@@ -126,7 +128,7 @@ class TestSplitNodeDelimiter(unittest.TestCase):
             TextNode(" delimiter", TextType.TEXT),
         ]
         result = split_nodes_delimiter(nodes, "_", TextType.ITALIC)
-        self.assertEqual(result, expected)
+        self.assertSequenceEqual(result, expected)
         self.assertIsNot(result, nodes)
 
     def test_delimit_code(self) -> None:
@@ -139,7 +141,7 @@ class TestSplitNodeDelimiter(unittest.TestCase):
             TextNode(" delimiter", TextType.TEXT),
         ]
         result = split_nodes_delimiter(nodes, "`", TextType.CODE)
-        self.assertEqual(result, expected)
+        self.assertSequenceEqual(result, expected)
         self.assertIsNot(result, nodes)
 
     def test_delimit_start(self) -> None:
@@ -151,7 +153,7 @@ class TestSplitNodeDelimiter(unittest.TestCase):
             TextNode(" delimiter at the start", TextType.TEXT),
         ]
         result = split_nodes_delimiter(nodes, "**", TextType.BOLD)
-        self.assertEqual(result, expected)
+        self.assertSequenceEqual(result, expected)
         self.assertIsNot(result, nodes)
 
     def test_delimit_end(self) -> None:
@@ -163,7 +165,7 @@ class TestSplitNodeDelimiter(unittest.TestCase):
             TextNode("bold", TextType.BOLD),
         ]
         result = split_nodes_delimiter(nodes, "**", TextType.BOLD)
-        self.assertEqual(result, expected)
+        self.assertSequenceEqual(result, expected)
         self.assertIsNot(result, nodes)
 
     def test_delimit_all(self) -> None:
@@ -189,7 +191,7 @@ class TestSplitNodeDelimiter(unittest.TestCase):
         result = split_nodes_delimiter(result, "_", TextType.ITALIC)
         result = split_nodes_delimiter(result, "`", TextType.CODE)
 
-        self.assertEqual(result, expected)
+        self.assertSequenceEqual(result, expected)
         self.assertIsNot(result, nodes)
 
 
@@ -199,13 +201,13 @@ class TestExtractMardownImages(unittest.TestCase):
         text = "Nothing to see here."
         expected = []
         result = extract_markdown_images(text)
-        self.assertEqual(result, expected)
+        self.assertSequenceEqual(result, expected)
 
     def test_single(self) -> None:
         text = "This is text with a ![rick roll](https://i.imgur.com/aKaOqIh.gif)."
         expected = [("rick roll", "https://i.imgur.com/aKaOqIh.gif")]
         result = extract_markdown_images(text)
-        self.assertEqual(result, expected)
+        self.assertSequenceEqual(result, expected)
 
     def test_many(self) -> None:
         text = (
@@ -217,38 +219,38 @@ class TestExtractMardownImages(unittest.TestCase):
             ("obi wan", "https://i.imgur.com/fJRm4Vk.jpeg"),
         ]
         result = extract_markdown_images(text)
-        self.assertEqual(result , expected)
+        self.assertSequenceEqual(result , expected)
 
     def test_start(self) -> None:
         text = "![rick roll](https://i.imgur.com/aKaOqIh.gif) image at the start."
         expected = [("rick roll", "https://i.imgur.com/aKaOqIh.gif")]
         result = extract_markdown_images(text)
-        self.assertEqual(result , expected)
+        self.assertSequenceEqual(result , expected)
 
     def test_end(self) -> None:
         text = "Image at the end ![rick roll](https://i.imgur.com/aKaOqIh.gif)"
         expected = [("rick roll", "https://i.imgur.com/aKaOqIh.gif")]
         result = extract_markdown_images(text)
-        self.assertEqual(result, expected)
+        self.assertSequenceEqual(result, expected)
 
     def test_exclude_links(self) -> None:
         text = "This is text with a link [to boot dev](https://www.boot.dev)."
         expected = []
         result = extract_markdown_images(text)
-        self.assertEqual(result, expected)
+        self.assertSequenceEqual(result, expected)
 
 class TestExtractMardownLinks(unittest.TestCase):
     def test_none(self) -> None:
         text = "Nothing to see here."
         expected = []
         result = extract_markdown_links(text)
-        self.assertEqual(result, expected)
+        self.assertSequenceEqual(result, expected)
 
     def test_single(self) -> None:
         text = "This is text with a link [to boot dev](https://www.boot.dev)."
         result = extract_markdown_links(text)
         expected = [("to boot dev", "https://www.boot.dev")]
-        self.assertEqual(result, expected)
+        self.assertSequenceEqual(result, expected)
 
     def test_many(self) -> None:
         text = (
@@ -260,25 +262,178 @@ class TestExtractMardownLinks(unittest.TestCase):
             ("to boot dev", "https://www.boot.dev"),
             ("to youtube", "https://www.youtube.com/@bootdotdev"),
         ]
-        self.assertEqual(result, expected)
+        self.assertSequenceEqual(result, expected)
 
     def test_start(self) -> None:
         text = "[to boot dev](https://www.boot.dev) link at the start."
         result = extract_markdown_links(text)
         expected = [("to boot dev", "https://www.boot.dev")]
-        self.assertEqual(result, expected)
+        self.assertSequenceEqual(result, expected)
 
     def test_end(self) -> None:
         text = "link at the end [to boot dev](https://www.boot.dev)"
         result = extract_markdown_links(text)
         expected = [("to boot dev", "https://www.boot.dev")]
-        self.assertEqual(result, expected)
+        self.assertSequenceEqual(result, expected)
 
     def test_exclude_image(self) -> None:
         text = "Image at the end ![rick roll](https://i.imgur.com/aKaOqIh.gif)"
         expected = []
         result = extract_markdown_links(text)
-        self.assertEqual(result, expected)
+        self.assertSequenceEqual(result, expected)
+
+
+class TestSplitNodesLink(unittest.TestCase):
+    def test_none(self) -> None:
+        node = TextNode("Nothing to see here.", TextType.TEXT)
+        expected = [TextNode("Nothing to see here.", TextType.TEXT)]
+        result = split_nodes_link([node])
+        self.assertSequenceEqual(result, expected)
+
+    def test_single(self) -> None:
+        node = TextNode(
+            "This is text with an [link](https://i.imgur.com/zjjcJKZ.png).",
+            TextType.TEXT,
+        )
+        expected = [
+            TextNode("This is text with an ", TextType.TEXT),
+            TextNode("link", TextType.LINK, "https://i.imgur.com/zjjcJKZ.png"),
+            TextNode(".", TextType.TEXT),
+        ]
+        result = split_nodes_link([node])
+        self.assertSequenceEqual(result, expected)
+
+    def test_start(self) -> None:
+        node = TextNode(
+            "[link](https://i.imgur.com/zjjcJKZ.png) at the start.",
+            TextType.TEXT,
+        )
+        expected = [
+            TextNode("link", TextType.LINK, "https://i.imgur.com/zjjcJKZ.png"),
+            TextNode(" at the start.", TextType.TEXT),
+        ]
+        result = split_nodes_link([node])
+        self.assertSequenceEqual(result, expected)
+
+    def test_end(self) -> None:
+        node = TextNode(
+            "at the end [link](https://i.imgur.com/zjjcJKZ.png)",
+            TextType.TEXT,
+        )
+        expected = [
+            TextNode("at the end ", TextType.TEXT),
+            TextNode("link", TextType.LINK, "https://i.imgur.com/zjjcJKZ.png"),
+        ]
+        result = split_nodes_link([node])
+        self.assertSequenceEqual(result, expected)
+
+    def test_many(self) -> None:
+        node = TextNode(
+            "This is text with an [link](https://i.imgur.com/zjjcJKZ.png) and "
+            "another [second link](https://i.imgur.com/3elNhQu.png)",
+            TextType.TEXT,
+        )
+        expected = [
+            TextNode("This is text with an ", TextType.TEXT),
+            TextNode("link", TextType.LINK, "https://i.imgur.com/zjjcJKZ.png"),
+            TextNode(" and another ", TextType.TEXT),
+            TextNode("second link", TextType.LINK, "https://i.imgur.com/3elNhQu.png"),
+        ]
+        new_nodes = split_nodes_link([node])
+        self.assertSequenceEqual(new_nodes, expected)
+
+    def test_with_images(self) -> None:
+        node = TextNode(
+            "This is text with an ![image](https://i.imgur.com/zjjcJKZ.png) and "
+            "a [link](https://i.imgur.com/3elNhQu.png)",
+            TextType.TEXT,
+        )
+        expected = [
+            TextNode(
+                "This is text with an ![image](https://i.imgur.com/zjjcJKZ.png) and "
+                "a ",
+                TextType.TEXT
+            ),
+            TextNode("link", TextType.LINK, "https://i.imgur.com/3elNhQu.png"),
+        ]
+        new_nodes = split_nodes_link([node])
+        self.assertSequenceEqual(new_nodes, expected)
+
+
+class TestSplitNodesImages(unittest.TestCase):
+    def test_none(self) -> None:
+        node = TextNode("Nothing to see here.", TextType.TEXT)
+        expected = [TextNode("Nothing to see here.", TextType.TEXT)]
+        result = split_nodes_image([node])
+        self.assertSequenceEqual(result, expected)
+
+    def test_single(self) -> None:
+        node = TextNode(
+            "This is text with an ![image](https://i.imgur.com/zjjcJKZ.png).",
+            TextType.TEXT,
+        )
+        expected = [
+            TextNode("This is text with an ", TextType.TEXT),
+            TextNode("image", TextType.IMAGE, "https://i.imgur.com/zjjcJKZ.png"),
+            TextNode(".", TextType.TEXT),
+        ]
+        result = split_nodes_image([node])
+        self.assertSequenceEqual(result, expected)
+
+    def test_start(self) -> None:
+        node = TextNode(
+            "![image](https://i.imgur.com/zjjcJKZ.png) at the start.",
+            TextType.TEXT,
+        )
+        expected = [
+            TextNode("image", TextType.IMAGE, "https://i.imgur.com/zjjcJKZ.png"),
+            TextNode(" at the start.", TextType.TEXT),
+        ]
+        result = split_nodes_image([node])
+        self.assertSequenceEqual(result, expected)
+
+    def test_end(self) -> None:
+        node = TextNode(
+            "at the end ![image](https://i.imgur.com/zjjcJKZ.png)",
+            TextType.TEXT,
+        )
+        expected = [
+            TextNode("at the end ", TextType.TEXT),
+            TextNode("image", TextType.IMAGE, "https://i.imgur.com/zjjcJKZ.png"),
+        ]
+        result = split_nodes_image([node])
+        self.assertSequenceEqual(result, expected)
+
+    def test_many(self) -> None:
+        node = TextNode(
+            "This is text with an ![image](https://i.imgur.com/zjjcJKZ.png) and "
+            "another ![second image](https://i.imgur.com/3elNhQu.png)",
+            TextType.TEXT,
+        )
+        expected = [
+            TextNode("This is text with an ", TextType.TEXT),
+            TextNode("image", TextType.IMAGE, "https://i.imgur.com/zjjcJKZ.png"),
+            TextNode(" and another ", TextType.TEXT),
+            TextNode(
+                "second image", TextType.IMAGE, "https://i.imgur.com/3elNhQu.png"
+            ),
+        ]
+        new_nodes = split_nodes_image([node])
+        self.assertSequenceEqual(new_nodes, expected)
+
+    def test_with_links(self) -> None:
+        node = TextNode(
+            "This is text with an ![image](https://i.imgur.com/zjjcJKZ.png) and "
+            "a [link](https://i.imgur.com/3elNhQu.png)",
+            TextType.TEXT,
+        )
+        expected = [
+            TextNode("This is text with an ", TextType.TEXT),
+            TextNode("image", TextType.IMAGE, "https://i.imgur.com/zjjcJKZ.png"),
+            TextNode(" and a [link](https://i.imgur.com/3elNhQu.png)", TextType.TEXT),
+        ]
+        new_nodes = split_nodes_image([node])
+        self.assertSequenceEqual(new_nodes, expected)
 
 
 if __name__ == "__main__":

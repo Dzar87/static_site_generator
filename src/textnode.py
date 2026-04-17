@@ -13,7 +13,9 @@ class TextType(Enum):
     IMAGE = "image"
 
 IMAGE_RE = re.compile(r"!\[(?P<alt>[^\[\]]*)\]\((?P<src>[^\(\)]*)\)")
+IMAGE_SPLIT_RE = re.compile(r"!\[[^\[\]]*\]\([^\(\)]*\)")
 LINK_RE = re.compile(r"(?<!!)\[(?P<value>[^\[\]]*)\]\((?P<href>[^\[\]]*)\)")
+LINK_SPLIT_RE = re.compile(r"(?<!!)\[[^\[\]]*\]\([^\[\]]*\)")
 
 
 class TextNode:
@@ -87,4 +89,56 @@ def extract_markdown_links(text: str) -> list[tuple[str, str]]:
     extracted: list[tuple[str, str]] = []
     for match in LINK_RE.finditer(text):
         extracted.append((match["value"], match["href"]))
+    return extracted
+
+
+def split_nodes_link(old_nodes: Sequence[TextNode]) -> Sequence[TextNode]:
+    extracted: list[TextNode] = []
+    for node in old_nodes:
+        links = extract_markdown_links(node.text)
+        if not links:
+            extracted.append(node)
+            continue
+
+        # Create the link nodes
+        link_nodes = [TextNode(i[0], TextType.LINK, url=i[1]) for i in links]
+
+        # Split the current node
+        split_node = re.split(LINK_SPLIT_RE, node.text)
+
+        # use zip to retain order
+        for text, link in zip(split_node, link_nodes):
+            if text != "":
+                extracted.append(TextNode(text, TextType.TEXT))
+            extracted.append(link)
+
+        # split_node will always be larger than image_nodes
+        if (last_text := split_node[-1]) != "":
+            extracted.append(TextNode(last_text, TextType.TEXT))
+
+    return extracted
+
+def split_nodes_image(old_nodes: Sequence[TextNode]) -> Sequence[TextNode]:
+    extracted: list[TextNode] = []
+    for node in old_nodes:
+        images = extract_markdown_images(node.text)
+        if not images:
+            extracted.append(node)
+            continue
+
+        # Create the image nodes
+        image_nodes = [TextNode(i[0], TextType.IMAGE, url=i[1]) for i in images]
+
+        # Split the current node
+        split_node = re.split(IMAGE_SPLIT_RE, node.text)
+
+        # use zip to retain order
+        for text, image in zip(split_node, image_nodes):
+            if text != "":
+                extracted.append(TextNode(text, TextType.TEXT))
+            extracted.append(image)
+
+        # split_node will always be larger than image_nodes
+        if (last_text := split_node[-1]) != "":
+            extracted.append(TextNode(last_text, TextType.TEXT))
     return extracted
