@@ -2,7 +2,7 @@ from enum import Enum
 import re
 from typing import Sequence
 
-from htmlnode import HTMLNode, LeafNode
+from htmlnode import HTMLNode, LeafNode, ParentNode
 
 
 class TextType(Enum):
@@ -188,3 +188,46 @@ def block_to_block_type(block: str) -> BlockType:
         else:
             return BlockType.ORDERED_LIST
     return BlockType.PARAGRAPH
+
+
+def _text_to_children(text: str) -> list[HTMLNode]:
+    return [text_node_to_html_node(n) for n in text_to_textnodes(text)]
+
+
+def block_to_html_node(block: str) -> HTMLNode:
+    match block_to_block_type(block):
+        case BlockType.HEADING:
+            heading_type, _, text = block.partition(" ")
+            return ParentNode(f"h{len(heading_type)}", children=_text_to_children(text))
+        case BlockType.CODE:
+            code_node = text_node_to_html_node(
+                TextNode("\n".join(block.splitlines()[1:-1]) + "\n", TextType.CODE)
+            )
+            return ParentNode("pre", children=[code_node])
+        case BlockType.QUOTE:
+            text = " ".join([t[1:].strip() for t in block.split("\n")])
+            return ParentNode("blockquote", children=_text_to_children(text))
+        case BlockType.UNORDERED_LIST:
+            children = [
+                ParentNode("li", children=_text_to_children(text[2:]))
+                for text in block.split("\n")
+            ]
+            return ParentNode("ul", children=children)
+        case BlockType.ORDERED_LIST:
+            children = [
+                ParentNode(
+                    "li", children=_text_to_children(text.partition(" ")[2].strip())
+                )
+                for text in block.split("\n")
+            ]
+            return ParentNode("ol", children=children)
+        case BlockType.PARAGRAPH:
+            text = block.replace("\n", " ")
+            return ParentNode("p", children=_text_to_children(text))
+        case _:
+            raise ValueError("unknown BlockType option")
+
+
+def markdown_to_html_node(markdown: str) -> HTMLNode:
+    children = [block_to_html_node(block) for block in markdown_to_blocks(markdown)]
+    return ParentNode("div", children=children)
