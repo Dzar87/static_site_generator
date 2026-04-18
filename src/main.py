@@ -23,6 +23,7 @@ def _copy_static(src: Path, dst: Path) -> None:
 
 
 def sync_static(src: Path, dst: Path) -> None:
+    LOG.debug("Syncing static files...")
     dst = dst.resolve()
     if dst.exists() and not dst.is_dir():
         raise ValueError(f"'{dst}' is not a directory")
@@ -34,17 +35,35 @@ def sync_static(src: Path, dst: Path) -> None:
         shutil.rmtree(dst)
     dst.mkdir(mode=0o755, parents=False, exist_ok=False)
     _copy_static(src, dst)
+    LOG.debug("...finished syncing static files")
 
 
-def generate_page(src: Path, dst: Path, tmpl: Path) -> None:
-    LOG.info(
-        "Generating page from %s to %s using %s", src.name, dst.name, tmpl.name
-    )
+def generate_pages(src: Path, dst: Path, tmpl: Path) -> None:
     template = Template(tmpl)
     template.validate()
-    title, content = parse_markdown_file(src)
-    template.render_to_file(dst, context={"title": title, "content": content})
+    LOG.debug("Generating pages...")
+    generate_pages_recursive(src, dst, template)
+    LOG.debug("...finished generating pages")
 
+
+def generate_pages_recursive(src: Path, dst: Path, template: Template) -> None:
+    LOG.debug("Processing... %s", src.name)
+    for f in src.iterdir():
+        if f.is_dir():
+            new_dst = dst / f.name
+            LOG.debug("Creating directory: %s in %s", new_dst.name, dst.name)
+            new_dst.mkdir(exist_ok=True)
+            generate_pages_recursive(f, new_dst, template)
+        elif f.suffix == ".md":
+            new_dst = dst / f"{f.stem}.html"
+            LOG.debug(
+                "Generating page %s to %s using %s", f.name, new_dst.name, template
+            )
+            title, content = parse_markdown_file(f)
+            template.render_to_file(
+                new_dst, context={"title": title, "content": content}
+            )
+    LOG.debug("...finished processing %s", src.name)
 
 def main() -> int:
     LOG.info("Starting...")
@@ -66,11 +85,10 @@ def main() -> int:
         LOG.exception("Failed to sync static")
         return 1
 
-    content_path = content_dir / "index.md"
     tmpl_path = tmpl_dir / "index.html"
 
     try:
-        generate_page(content_path, dst / "index.html", tmpl_path)
+        generate_pages(content_dir, dst, tmpl_path)
     except (ValueError, AssertionError, FileNotFoundError):
         LOG.exception("Failed to generate page")
         return 1
