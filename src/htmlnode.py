@@ -1,18 +1,20 @@
-from typing import Protocol, Sequence
-from abc import abstractmethod
+from abc import ABC, abstractmethod
+from typing import MutableSequence
 
-class NodeProtocol(Protocol):
+class Node(ABC):
+
+    @abstractmethod
     def to_html(self) -> str: ...
 
 
-class HTMLNode:
-    repr_attrs = ("tag", "value", "children", "props")
+class HTMLNode(Node):
+    repr_attrs: tuple[str, ...] = ("tag", "value", "children", "props")
 
     def __init__(
         self,
         tag: str | None = None,
         value: str | None = None,
-        children: Sequence[NodeProtocol]| None = None,
+        children: MutableSequence["HTMLNode"] | None = None,
         props: dict[str, str | None] | None = None,
     ) -> None:
         self.tag = tag
@@ -20,7 +22,6 @@ class HTMLNode:
         self.children = children
         self.props = props
 
-    @abstractmethod
     def to_html(self) -> str:
         raise NotImplementedError
 
@@ -68,7 +69,7 @@ class ParentNode(HTMLNode):
     def __init__(
         self,
         tag: str | None,
-        children: Sequence[NodeProtocol] | None,
+        children: MutableSequence[HTMLNode] | None,
         props: dict[str, str | None] | None = None,
     ) -> None:
         super().__init__(tag=tag, children=children, props=props)

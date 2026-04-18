@@ -1,8 +1,13 @@
 from enum import Enum
 import re
-from typing import Sequence
+from typing import TYPE_CHECKING
 
-from htmlnode import HTMLNode, LeafNode, ParentNode
+from htmlnode import LeafNode, ParentNode
+
+if TYPE_CHECKING:
+    from typing import MutableSequence
+
+    from htmlnode import HTMLNode
 
 
 class TextType(Enum):
@@ -50,7 +55,7 @@ class TextNode:
         return f"TextNode({self.text}, {self.text_type.value}, {self.url})"
 
 
-def text_node_to_html_node(text_node: TextNode) -> HTMLNode:
+def text_node_to_html_node(text_node: TextNode) -> LeafNode:
     value: LeafNode
     if text_node.text_type == TextType.TEXT:
         value = LeafNode(None, text_node.text)
@@ -71,9 +76,9 @@ def text_node_to_html_node(text_node: TextNode) -> HTMLNode:
 
 
 def split_nodes_delimiter(
-    old_nodes: Sequence[TextNode], delimiter: str, text_type: TextType
-) -> Sequence[TextNode]:
-    new_nodes: Sequence[TextNode] = []
+    old_nodes: list[TextNode], delimiter: str, text_type: TextType
+) -> list[TextNode]:
+    new_nodes: list[TextNode] = []
     for node in old_nodes:
         if node.text_type != TextType.TEXT or delimiter not in node.text:
             new_nodes.append(node)
@@ -105,7 +110,7 @@ def extract_markdown_links(text: str) -> list[tuple[str, str]]:
     return extracted
 
 
-def split_nodes_link(old_nodes: Sequence[TextNode]) -> Sequence[TextNode]:
+def split_nodes_link(old_nodes: list[TextNode]) -> list[TextNode]:
     extracted: list[TextNode] = []
     for node in old_nodes:
         links = extract_markdown_links(node.text)
@@ -131,7 +136,7 @@ def split_nodes_link(old_nodes: Sequence[TextNode]) -> Sequence[TextNode]:
 
     return extracted
 
-def split_nodes_image(old_nodes: Sequence[TextNode]) -> Sequence[TextNode]:
+def split_nodes_image(old_nodes: list[TextNode]) -> list[TextNode]:
     extracted: list[TextNode] = []
     for node in old_nodes:
         images = extract_markdown_images(node.text)
@@ -157,7 +162,7 @@ def split_nodes_image(old_nodes: Sequence[TextNode]) -> Sequence[TextNode]:
     return extracted
 
 
-def text_to_textnodes(text: str) -> Sequence[TextNode]:
+def text_to_textnodes(text: str) -> list[TextNode]:
     result = [TextNode(text, TextType.TEXT)]
     result = split_nodes_image(result)
     result = split_nodes_link(result)
@@ -167,7 +172,7 @@ def text_to_textnodes(text: str) -> Sequence[TextNode]:
     return result
 
 
-def markdown_to_blocks(markdown: str) -> Sequence[str]:
+def markdown_to_blocks(markdown: str) -> list[str]:
     return [s for i in markdown.split("\n\n") if (s := i.strip())]
 
 
@@ -190,7 +195,7 @@ def block_to_block_type(block: str) -> BlockType:
     return BlockType.PARAGRAPH
 
 
-def _text_to_children(text: str) -> list[HTMLNode]:
+def _text_to_children(text: str) -> MutableSequence[HTMLNode]:
     return [text_node_to_html_node(n) for n in text_to_textnodes(text)]
 
 
@@ -208,7 +213,7 @@ def block_to_html_node(block: str) -> HTMLNode:
             text = " ".join([t[1:].strip() for t in block.split("\n")])
             return ParentNode("blockquote", children=_text_to_children(text))
         case BlockType.UNORDERED_LIST:
-            children = [
+            children: list[HTMLNode] = [
                 ParentNode("li", children=_text_to_children(text[2:]))
                 for text in block.split("\n")
             ]

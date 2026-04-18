@@ -63,7 +63,7 @@ class TestLeafNode(unittest.TestCase):
 
     def test_init_with_children(self) -> None:
         with self.assertRaises(TypeError):
-            LeafNode("p", "some value", children=[])  # noqa
+            LeafNode("p", "some value", children=[])  # type: ignore
 
 
 class TestParentNode(unittest.TestCase):

@@ -204,9 +204,8 @@ class TestExtractMardownImages(unittest.TestCase):
 
     def test_none(self) -> None:
         text = "Nothing to see here."
-        expected = []
         result = extract_markdown_images(text)
-        self.assertSequenceEqual(result, expected)
+        self.assertFalse(result)
 
     def test_single(self) -> None:
         text = "This is text with a ![rick roll](https://i.imgur.com/aKaOqIh.gif)."
@@ -240,16 +239,14 @@ class TestExtractMardownImages(unittest.TestCase):
 
     def test_exclude_links(self) -> None:
         text = "This is text with a link [to boot dev](https://www.boot.dev)."
-        expected = []
         result = extract_markdown_images(text)
-        self.assertSequenceEqual(result, expected)
+        self.assertFalse(result)
 
 class TestExtractMardownLinks(unittest.TestCase):
     def test_none(self) -> None:
         text = "Nothing to see here."
-        expected = []
         result = extract_markdown_links(text)
-        self.assertSequenceEqual(result, expected)
+        self.assertFalse(result)
 
     def test_single(self) -> None:
         text = "This is text with a link [to boot dev](https://www.boot.dev)."
@@ -283,9 +280,8 @@ class TestExtractMardownLinks(unittest.TestCase):
 
     def test_exclude_image(self) -> None:
         text = "Image at the end ![rick roll](https://i.imgur.com/aKaOqIh.gif)"
-        expected = []
         result = extract_markdown_links(text)
-        self.assertSequenceEqual(result, expected)
+        self.assertFalse(result)
 
 
 class TestSplitNodesLink(unittest.TestCase):
