@@ -22,6 +22,12 @@ class Template:
         self._template: str = ""
         self._is_valid = False
 
+    def __repr__(self) -> str:
+        return (
+            f"{self.__class__.__name__}"
+            f"(file: '{self._template_path.name}' is_valid: {self._is_valid})"
+        )
+
     def _load_template(self) -> None:
         if not self._template:
             self._template = self._template_path.read_text()
