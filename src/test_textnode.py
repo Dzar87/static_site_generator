@@ -7,6 +7,7 @@ from textnode import (
     block_to_block_type,
     extract_markdown_images,
     extract_markdown_links,
+    extract_title,
     markdown_to_blocks,
     markdown_to_html_node,
     split_nodes_delimiter,
@@ -736,6 +737,27 @@ the **same** even with inline stuff
         node = markdown_to_html_node(md)
         html = node.to_html()
         self.assertEqual(html, expected)
+
+
+class TestExtractTitle(unittest.TestCase):
+
+    def test_happy(self) -> None:
+        md = "# title\n"
+        node = markdown_to_html_node(md)
+        result = extract_title(node)
+        self.assertEqual(result, "title")
+
+    def test_sad(self) -> None:
+        cases = [
+            "without a title",
+            "something before\n# title",
+            "",
+        ]
+        for md in cases:
+            with self.subTest(md=md):
+                node = markdown_to_html_node(md)
+                with self.assertRaises(ValueError):
+                    extract_title(node)
 
 
 if __name__ == "__main__":

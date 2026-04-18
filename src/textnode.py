@@ -6,6 +6,7 @@ from htmlnode import LeafNode, ParentNode
 
 if TYPE_CHECKING:
     from typing import MutableSequence
+    from pathlib import Path
 
     from htmlnode import HTMLNode
 
@@ -236,3 +237,19 @@ def block_to_html_node(block: str) -> HTMLNode:
 def markdown_to_html_node(markdown: str) -> HTMLNode:
     children = [block_to_html_node(block) for block in markdown_to_blocks(markdown)]
     return ParentNode("div", children=children)
+
+
+def extract_title(node: HTMLNode) -> str:
+    if node.children:
+        first_child = node.children[0]
+        if first_child.tag == "h1" and first_child.children:
+            return " ".join([c.to_html() for c in first_child.children])
+
+    raise ValueError("markdown content does not contain a <h1> title.")
+
+
+def parse_markdown_file(path: Path) -> tuple[str, HTMLNode]:
+    path = path.resolve(strict=True)
+    content = markdown_to_html_node(path.read_text())
+    title = extract_title(content)
+    return title, content
