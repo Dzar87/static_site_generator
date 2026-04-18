@@ -40,7 +40,7 @@ class Template:
                 assert value in self._template, f"{value} not in template"
             self._is_valid = True
 
-    def render(self, context: ContextDict) -> str:
+    def render(self, context: ContextDict, basepath="/") -> str:
         assert self._is_valid, "template not validated"
         result = self._template
         for sub in self.required_subs:
@@ -49,8 +49,11 @@ class Template:
             if isinstance(value, HTMLNode):
                 value = value.to_html()
             result = result.replace(f"{{{{ {sub} }}}}", value)
+        if basepath != "/":
+            result = result.replace('href="/', f'href="{basepath}')
+            result = result.replace('src="/', f'src="{basepath}')
         return result
 
-    def render_to_file(self, dst: Path, context: ContextDict) -> Path:
-        dst.write_text(self.render(context=context))
+    def render_to_file(self, dst: Path, context: ContextDict, basepath="/") -> Path:
+        dst.write_text(self.render(context=context, basepath=basepath))
         return dst

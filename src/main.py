@@ -1,6 +1,7 @@
 import logging
 from pathlib import Path
 import shutil
+import sys
 
 from template import Template
 from textnode import parse_markdown_file
@@ -38,22 +39,24 @@ def sync_static(src: Path, dst: Path) -> None:
     LOG.debug("...finished syncing static files")
 
 
-def generate_pages(src: Path, dst: Path, tmpl: Path) -> None:
+def generate_pages(src: Path, dst: Path, tmpl: Path, basepath: str) -> None:
     template = Template(tmpl)
     template.validate()
     LOG.debug("Generating pages...")
-    generate_pages_recursive(src, dst, template)
+    generate_pages_recursive(src, dst, template, basepath)
     LOG.debug("...finished generating pages")
 
 
-def generate_pages_recursive(src: Path, dst: Path, template: Template) -> None:
+def generate_pages_recursive(
+    src: Path, dst: Path, template: Template, basepath: str
+) -> None:
     LOG.debug("Processing... %s", src.name)
     for f in src.iterdir():
         if f.is_dir():
             new_dst = dst / f.name
             LOG.debug("Creating directory: %s in %s", new_dst.name, dst.name)
             new_dst.mkdir(exist_ok=True)
-            generate_pages_recursive(f, new_dst, template)
+            generate_pages_recursive(f, new_dst, template, basepath)
         elif f.suffix == ".md":
             new_dst = dst / f"{f.stem}.html"
             LOG.debug(
@@ -61,12 +64,13 @@ def generate_pages_recursive(src: Path, dst: Path, template: Template) -> None:
             )
             title, content = parse_markdown_file(f)
             template.render_to_file(
-                new_dst, context={"title": title, "content": content}
+                new_dst, context={"title": title, "content": content}, basepath=basepath
             )
     LOG.debug("...finished processing %s", src.name)
 
 def main() -> int:
     LOG.info("Starting...")
+    basepath = sys.argv[1] if len(sys.argv) > 1 else "/"
     # TODO: Make these configurable
     root_path = Path(__file__).parent.parent
     static_dir = root_path / "static"
@@ -88,7 +92,7 @@ def main() -> int:
     tmpl_path = tmpl_dir / "index.html"
 
     try:
-        generate_pages(content_dir, dst, tmpl_path)
+        generate_pages(content_dir, dst, tmpl_path, basepath)
     except (ValueError, AssertionError, FileNotFoundError):
         LOG.exception("Failed to generate page")
         return 1
