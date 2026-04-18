@@ -2,6 +2,9 @@ import logging
 from pathlib import Path
 import shutil
 
+from template import Template
+from textnode import parse_markdown_file
+
 logging.basicConfig(level=logging.DEBUG)
 LOG = logging.getLogger(__name__)
 
@@ -33,13 +36,46 @@ def sync_static(src: Path, dst: Path) -> None:
     _copy_static(src, dst)
 
 
+def generate_page(src: Path, dst: Path, tmpl: Path) -> None:
+    LOG.info(
+        "Generating page from %s to %s using %s", src.name, dst.name, tmpl.name
+    )
+    template = Template(tmpl)
+    template.validate()
+    title, content = parse_markdown_file(src)
+    template.render_to_file(dst, context={"title": title, "content": content})
+
+
 def main() -> int:
     LOG.info("Starting...")
-    src = Path(__file__).parent.parent / "static"
-    LOG.info("Static source: %s", src)
-    dst = Path(__file__).parent.parent / "public"
-    LOG.info("Static destination: %s", dst)
-    sync_static(src, dst)
+    # TODO: Make these configurable
+    root_path = Path(__file__).parent.parent
+    static_dir = root_path / "static"
+    dst = root_path / "public"
+    content_dir = root_path / "content"
+    tmpl_dir = root_path / "templates"
+
+    LOG.info("Static dir: %s", static_dir)
+    LOG.info("Destination dir: %s", dst)
+    LOG.info("Content dir: %s", content_dir)
+    LOG.info("Template dir: %s", tmpl_dir)
+
+    try:
+        sync_static(static_dir, dst)
+    except (ValueError, FileNotFoundError):
+        LOG.exception("Failed to sync static")
+        return 1
+
+    content_path = content_dir / "index.md"
+    tmpl_path = tmpl_dir / "index.html"
+
+    try:
+        generate_page(content_path, dst / "index.html", tmpl_path)
+    except (ValueError, AssertionError, FileNotFoundError):
+        LOG.exception("Failed to generate page")
+        return 1
+
+    LOG.info("Finished.")
     return 0
 
 
