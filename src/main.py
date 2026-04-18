@@ -74,7 +74,7 @@ def main() -> int:
     # TODO: Make these configurable
     root_path = Path(__file__).parent.parent
     static_dir = root_path / "static"
-    dst = root_path / "public"
+    dst = root_path / "docs"
     content_dir = root_path / "content"
     tmpl_dir = root_path / "templates"
 
